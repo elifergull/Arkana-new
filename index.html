@@ -752,6 +752,251 @@ RUNE_RAW.forEach((r,i)=>{
 });
 
 /* ============================================================
+   ELEMENT ONURU (Golden Dawn Elemental Dignities) — TAROT SENTEZ MOTORU
+   ============================================================ */
+const ELEMENT_DIGNITY = {
+  "Ateş-Ateş": {tip:"pekistirme", not:"İki ateş kartı bir araya geldiğinde tutku had safhaya çıkıyor; ancak kontrolsüz bırakılırsa alev kendi kendini tüketip erken söner."},
+  "Ateş-Hava": {tip:"guclenme",  not:"Hava ateşi besler: düşünce doğrudan eyleme, söz doğrudan harekete dönüşüyor. Bu kombinasyon süreci normalden hızlı ilerletir."},
+  "Ateş-Su":   {tip:"zayiflama", not:"Ateş ile Su birbirini söndürür: tutku ile duygu çatışıyor, karar anında bocalama ve iç çelişki büyüyor."},
+  "Ateş-Toprak":{tip:"zayiflama", not:"Toprak ateşi boğar: hevesli bir atılım, somut gerçeklerin ve yavaş işleyen şartların duvarına çarpıyor."},
+  "Hava-Hava": {tip:"pekistirme", not:"Zihinsel süreç katlanıyor; netlik artabilir ama fazla düşünme kararı da geciktirebilir."},
+  "Hava-Su":   {tip:"zayiflama", not:"Hava suyu dalgalandırır: mantık ile duygu arasında gidip gelme, net bir tarafa geçememe hali var."},
+  "Hava-Toprak":{tip:"zayiflama", not:"Soyut plan somut gerçekle çarpışıyor; fikir var ama şu anki koşullarda uygulanabilirliği tartışmalı."},
+  "Su-Su":     {tip:"pekistirme", not:"Duygusal yoğunluk ikiye katlanıyor; hem derin şifa hem taşma riski aynı anda masada."},
+  "Su-Toprak": {tip:"guclenme",  not:"Toprak suyu tutar, verimli bir zemin oluşur; hisler somut ve kalıcı adımlara dönüşebilir."},
+  "Toprak-Toprak":{tip:"pekistirme", not:"Kalıcılık ve inat katmerleniyor; güven çok sağlam ama değişime direnç de bir o kadar sert."}
+};
+function getDignity(e1, e2){
+  return ELEMENT_DIGNITY[e1+"-"+e2] || ELEMENT_DIGNITY[e2+"-"+e1]
+    || {tip:"notr", not:"Aralarında doğrudan bir çekim ya da çatışma yok; iki kart da kendi mesajını bağımsız taşıyor."};
+}
+const DIGNITY_PHRASE = {
+  pekistirme: "aynı frekansta buluşup birbirini katlıyor",
+  guclenme:   "birbirini besleyip güçleniyor",
+  zayiflama:  "birbiriyle çatışıp zayıflıyor",
+  notr:       "birbirinden bağımsız, kendi hattında ilerliyor"
+};
+
+function synthesizeTarotOzet(slots, topic, q){
+  const first = slots[0];
+  const outcome = slots[slots.length - 1];
+  const firstMeaning = first.reversed ? first.card.reversed : first.card.upright;
+  const outMeaning = outcome.reversed ? outcome.card.reversed : outcome.card.upright;
+  const dign = getDignity(first.card.element, outcome.card.element);
+
+  const majorCount = slots.filter(s => s.card.arcana === "major").length;
+  const isFated = majorCount >= Math.ceil(slots.length / 2);
+  const vade = calculateDynamicTarotVade(slots, topic);
+
+  const topicFrame = topic === "career"
+    ? "kariyer/iş sürecinizin"
+    : topic === "love"
+      ? "kalbinizi ilgilendiren bu bağın"
+      : "bu meselenin";
+
+  const fateNote = isFated
+    ? `Açılımda büyük arkananın ağır basması, ${topicFrame} gündelik bir tercihten çok, kaderin kendi ritmine bıraktığı bir eşik olduğunu gösteriyor — kontrol tamamen sizde değil, ama duruşunuz sonucu şekillendiriyor.`
+    : `Açılımda küçük arkananın ağır basması, ${topicFrame} büyük bir kader kırılmasından çok, günlük tercihler, söylenen/söylenmeyen sözler ve atılan somut adımlarla şekillendiğini gösteriyor.`;
+
+  const orta = slots.length > 2 ? slots.slice(1, -1) : [];
+  let ortaNote = "";
+  if(orta.length > 0){
+    const ortaParcalar = orta.map(s=>{
+      const m = s.reversed ? s.card.reversed : s.card.upright;
+      return `<strong>${s.card.mark} ${s.card.name}</strong> ("${m}")`;
+    }).join(", ");
+    ortaNote = `<p>Arada duran ${ortaParcalar}, bu iki ucun arasındaki köprüyü kuruyor; süreç boşlukta ilerlemiyor, aksine bu ara adımların üzerinden yürüyor.</p>`;
+  }
+
+  return `
+    <p>Açılımın ilk işareti <strong>${first.card.mark} ${first.card.name} (${first.reversed?'Ters':'Düz'})</strong>,
+    meselenin köküne "${firstMeaning}" enerjisiyle işaret ediyor. Bu enerji, sürecin son noktasındaki
+    <strong>${outcome.card.mark} ${outcome.card.name} (${outcome.reversed?'Ters':'Düz'})</strong> kartıyla ${DIGNITY_PHRASE[dign.tip]}:
+    ${dign.not}</p>
+    ${ortaNote}
+    <p>${fateNote}</p>
+    <p>Sonuç kartının "${outMeaning}" mesajı, ${topicFrame} nihai rengini belirliyor. Kartların element ritmine göre
+    bu sürecin somutlaşma vadesi <strong>${vade}</strong> olarak beliriyor.</p>
+  `;
+}
+
+/* ============================================================
+   KATİNA TON KOMBİNASYONU MOTORU
+   ============================================================ */
+const KATINA_WARNING  = ["Yılan","Yatağan","Dağ","Kilit","Baykuş","Fırtına","Tilki","Assyranta","Fare","Mezar","Ariman","İsra"];
+const KATINA_POSITIVE = ["Afrodit","Yüzük","Güneş","Yıldızlar","Zambak","Gökkuşağı","Balık","Kadeh","Kalp","Çapa","Desteia","İsfahan","Zümrüt","Yakut"];
+
+function katinaTone(name){
+  if(KATINA_WARNING.includes(name)) return "uyari";
+  if(KATINA_POSITIVE.includes(name)) return "olumlu";
+  return "notr";
+}
+
+function synthesizeKatinaOzet(slots, q){
+  const center = slots[0];
+  const outcome = slots[slots.length - 1];
+  const cTone = katinaTone(center.card.name);
+  const oTone = katinaTone(outcome.card.name);
+  const cMeaning = center.reversed ? center.card.reversed : center.card.upright;
+  const oMeaning = outcome.reversed ? outcome.card.reversed : outcome.card.upright;
+  const vade = calculateDynamicKatinaVade(slots);
+
+  let comboText;
+  if(cTone === "olumlu" && oTone === "olumlu")
+    comboText = "İki uçtan da gelen olumlu işaretler birbirini destekliyor; bu bağın şansı gerçekten yüksek, tek risk sabırsızlıkla acele etmek.";
+  else if(cTone === "uyari" && oTone === "uyari")
+    comboText = "Hem başlangıç hem netice kartının uyarı taşıması, bu meselede dış etkenlerin (kıskançlık, laf taşıma, üçüncü bir kişi) gerçekten devrede olduğunu gösteriyor; temkinli ilerlemekte fayda var.";
+  else if(cTone === "uyari" && oTone === "olumlu")
+    comboText = "Başlangıçtaki sıkıntılı görüntüye rağmen netice olumluya dönüyor; yani şu anki huzursuzluk kalıcı değil, geçilmesi gereken bir sınav aşaması.";
+  else if(cTone === "olumlu" && oTone === "uyari")
+    comboText = "Başlangıçtaki iyi niyete rağmen sona doğru bir pürüz sinyali beliriyor; bu, bağa dışarıdan bir müdahale ya da gereksiz bir gerginlik girebileceğine işaret ediyor.";
+  else
+    comboText = "Kartlar net bir uyarı ya da kesin bir müjde vermek yerine, sürecin dengeli ve büyük ölçüde iki tarafın elinde şekillendiğini gösteriyor.";
+
+  const orta = slots.length > 2 ? slots.slice(1, -1) : [];
+  let ortaNote = "";
+  if(orta.length > 0){
+    const ortaParcalar = orta.map(s=>{
+      const m = s.reversed ? s.card.reversed : s.card.upright;
+      return `<strong>${s.card.name}</strong> ("${m}")`;
+    }).join(", ");
+    ortaNote = `<p>Arada açılan ${ortaParcalar}, bu iki ucun arasında hangi engellerin veya fırsatların döşeli olduğunu gösteriyor.</p>`;
+  }
+
+  return `
+    <p>Merkezdeki <strong>${center.card.name}</strong> kartı "${cMeaning}" derken, hükmü belirleyen
+    <strong>${outcome.card.name}</strong> kartı "${oMeaning}" diyor. ${comboText}</p>
+    ${ortaNote}
+    <p><strong>Katina'nın Kadersel Vadesi:</strong> Bu durumun çözüleceği zaman aralığı
+    <strong>${vade}</strong> olarak işaretlenmiştir.</p>
+  `;
+}
+
+/* ============================================================
+   RÜN AETT (AİLE) İLİŞKİSİ MOTORU
+   ============================================================ */
+const AETT_NAMES = [
+  "Freyr'in Aett'i (Bereket ve Maddi Temeller)",
+  "Hagal'ın Aett'i (Sınav ve Dönüşüm)",
+  "Tyr'ın Aett'i (Adalet ve Toplumsal Bağ)"
+];
+function runeAettIndex(rune){ return Math.floor(parseInt(rune.id.slice(1), 10) / 8); }
+
+function synthesizeRuneOzet(slots, q){
+  const first = slots[0].rune;
+  const last  = slots[slots.length - 1].rune;
+  const a1 = runeAettIndex(first), a2 = runeAettIndex(last);
+
+  const fastRunes = ["Fehu","Kenaz","Wunjo","Sowilo","Dagaz","Raidho"];
+  const slowRunes  = ["Isa","Nauthiz","Hagalaz","Jera","Eihwaz","Othala"];
+  let vade;
+  if(fastRunes.includes(last.name)) vade = "4 ila 9 gün içinde hızlı ve aydınlatıcı bir haberle";
+  else if(slowRunes.includes(last.name)) vade = "4 ila 7 haftalık sabırlı bir olgunlaşma evresiyle";
+  else vade = "2 ila 3 haftalık kararlı bir süreçle";
+
+  const aettNote = a1 === a2
+    ? `Hem ilk hem son taş aynı aile olan <strong>${AETT_NAMES[a1]}</strong>'nden geldiği için mesaj tek bir eksende yoğunlaşıyor; dağılmadan tek konuya odaklanmanız gerekiyor.`
+    : `İlk taş <strong>${AETT_NAMES[a1]}</strong>'nden, son taş <strong>${AETT_NAMES[a2]}</strong>'nden geliyor; yani süreç bir evreden diğerine doğru gerçek bir geçiş yapıyor.`;
+
+  const orta = slots.length > 2 ? slots.slice(1, -1) : [];
+  let ortaNote = "";
+  if(orta.length > 0){
+    const ortaParcalar = orta.map(s=>`<strong>${s.rune.mark} ${s.rune.name}</strong> ("${s.rune.upright}")`).join(", ");
+    ortaNote = `<p>Arada duran ${ortaParcalar}, bu geçişin hangi aşamalardan geçtiğini gösteriyor.</p>`;
+  }
+
+  return `
+    <p><strong>${first.mark} ${first.name}</strong> "${first.upright}" derken,
+    <strong>${last.mark} ${last.name}</strong> ile kapanıyor: "${last.upright}". ${aettNote}</p>
+    ${ortaNote}
+    <p><strong>Rünlerin Belirlediği Zaman Eşiği:</strong> Bu belirsizliğin dağılacağı an
+    <strong>${vade}</strong> olarak tecelli etmektedir.</p>
+  `;
+}
+
+/* ============================================================
+   POZİSYON BAZLI, ELEMENTE GÖRE DEĞİŞEN YORUM METNİ
+   (78 kartın hepsi için ayrı ayrı yazmak yerine, kartın kendi
+   elementi + ters/düz durumu + majör/minör olması üzerinden
+   16 farklı kombinasyon üretir — sabit 2 cümle değil)
+   ============================================================ */
+function positionInsight(card, reversed){
+  const arcanaNote = card.arcana === 'major'
+    ? "Büyük arkana olması, bu noktada kişisel tercihin ötesinde kaderin kendi ritminin işlediğini gösteriyor."
+    : "Küçük arkana olması, bu noktada günlük tutum ve somut davranışların belirleyici olduğunu gösteriyor.";
+  const elText = {
+    "Ateş": reversed
+      ? "İçindeki ateş şu an bastırılmış durumda; tepki vermek yerine sessiz kalmayı seçiyor, ama bu bastırma er ya da geç patlayacak bir baskı biriktiriyor."
+      : "İçindeki ateş açıkça dışa vuruyor; ne hissettiği belli, harekete geçmekten çekinmiyor.",
+    "Su": reversed
+      ? "Duygularını gizliyor; yüzeyde sakin görünse de altta güçlü bir akıntı var, söylemediği çok şey taşıyor."
+      : "Duygular açıkça akıyor; ne hissettiğini saklamıyor, kalbinin sesine göre hareket ediyor.",
+    "Hava": reversed
+      ? "Zihni kararsız, aynı düşünceyi tekrar tekrar evirip çeviriyor; karar anı henüz netleşmedi."
+      : "Zihni net ve kararlı; durumu çoktan değerlendirmiş, ne düşündüğünü biliyor.",
+    "Toprak": reversed
+      ? "Somut bir adım atmakta zorlanıyor; güvensizlik ya da eski alışkanlıklar onu yerinde tutuyor."
+      : "Somut ve kalıcı bir zemin arıyor; adımlarını sağlam ve ölçülü atıyor."
+  }[card.element] || "";
+  return `${arcanaNote} ${elText}`;
+}
+
+/* ============================================================
+   ERİL-DİŞİL: ZİHİN / KALP / EYLEM METİNLERİ — ELEMENTE GÖRE
+   (kartın rolü değil, elementi belirleyici; 4 element x 2 yön = 8
+   varyasyon her rol için, toplamda sabit tekrar yok)
+   ============================================================ */
+const ED_MIND_TEXT = {
+  "Ateş": {u:"Zihni hareketli ve sabırsız; uzun uzun düşünmek yerine hemen bir sonuca varmak istiyor.", r:"Zihni kendi içinde çatışmalı; hızlı karar vermesi gerektiğini bilse de bir türlü harekete geçemiyor."},
+  "Su":   {u:"Zihni duygularıyla iç içe; mantıklı düşünmeye çalışsa da kalbinin sesi sürekli araya giriyor.", r:"Zihni duygu yükünden bulanık; net düşünmek yerine geçmişin izlerinde dolaşıyor."},
+  "Hava": {u:"Zihni analitik ve net; durumu soğukkanlılıkla değerlendirip zaten bir sonuca varmış.", r:"Zihni fazla düşünmekten yoruluyor; aynı senaryoları tekrar tekrar kuruyor ama karara varamıyor."},
+  "Toprak":{u:"Zihni somut çözümler arıyor; duygusallıktan çok pratik sonuçla ilgileniyor.", r:"Zihni eski alışkanlıklara ve güvenli alana sıkışmış; değişime direniyor."}
+};
+const ED_HEART_TEXT = {
+  "Ateş": {u:"Kalbindeki tutku hâlâ diri; çekim gücünü inkar edemiyor.", r:"Kalbindeki tutkuyu bastırıyor; kontrolü kaybetmekten korktuğu için hissettiklerini örtüyor."},
+  "Su":   {u:"Kalbi son derece açık ve savunmasız; sevdiğini gizlemekte zorlanıyor.", r:"Kalbini koruma altına almış; kırılma korkusu onu duygusal olarak kapatıyor."},
+  "Hava": {u:"Kalbi mantığıyla uzlaşmış durumda; hissettiklerini net biçimde ifade edebiliyor.", r:"Kalbi ile aklı çatışıyor; ne hissettiğini kendine bile itiraf etmekte zorlanıyor."},
+  "Toprak":{u:"Kalbi sadakat ve güvenlik arıyor; hissettiği bağın kalıcı olmasını istiyor.", r:"Kalbi güvensizlikle gölgelenmiş; yeniden bağlanmaktan çekiniyor."}
+};
+const ED_ACTION_TEXT = {
+  "Ateş": {u:"Harekete geçmekte tereddüt etmiyor; doğrudan ve cesur bir adım atacak.", r:"Doğrudan harekete geçmek yerine önce dolaylı yollarla, uzaktan bir yoklama yapacak."},
+  "Su":   {u:"Hislerine yenik düşüp yumuşak ve duygusal bir yaklaşımla gelecek.", r:"Sessiz kalıp beklemeyi, hiçbir şey söylemeden gözlemlemeyi seçecek."},
+  "Hava": {u:"Net ve açık bir mesajla, doğrudan iletişim kurarak gelecek.", r:"Kafasında kurup taşınmaya devam edecek; sözle değil ima ile ilerleyecek."},
+  "Toprak":{u:"Somut, planlı ve kalıcı bir adımla ilerleyecek.", r:"Adımını geciktirecek; güvenli bir bahane bulana kadar bekleyecek."}
+};
+function edInsight(map, card, reversed){
+  const t = map[card.element];
+  if(!t) return reversed ? card.reversed : card.upright;
+  return reversed ? t.r : t.u;
+}
+
+/* ============================================================
+   KATİNA: TON + TERS/DÜZ'E GÖRE KİLİT NOKTA METNİ (6 varyasyon)
+   ============================================================ */
+function katinaKeyPointNote(card, reversed){
+  const tone = katinaTone(card.name);
+  if(tone === "uyari") return reversed
+    ? "Kartın ters çıkması, araya giren üçüncü kişilerin laflarının veya yersiz bir inatlaşmanın ilişkiyi tıkadığını gösteriyor."
+    : "Kart düz olsa da uyarı niteliği taşıyor; ortamda dikkat edilmesi gereken bir gerginlik ya da güvensizlik var.";
+  if(tone === "olumlu") return reversed
+    ? "Kart ters gelse de temelindeki olumlu enerji kaybolmuyor, sadece gecikme veya tereddütle karşılaşıyor."
+    : "Kart düz ve olumlu bir enerji taşıyor; aradaki hislerin sahte olmadığını, temelin sağlam olduğunu gösteriyor.";
+  return reversed
+    ? "Kartın ters gelmesi, durumun henüz netleşmediğini, iki tarafın da bir bekleme modunda olduğunu gösteriyor."
+    : "Kart düz gelse de nötr bir enerji taşıyor; durum daha çok iki tarafın atacağı adıma bağlı.";
+}
+
+/* ============================================================
+   RÜN: AETT'E GÖRE İLK TAŞ KAPANIŞ NOTU (3 varyasyon)
+   ============================================================ */
+function runeFirstNote(rune){
+  const aett = runeAettIndex(rune);
+  if(aett === 0) return "Bu rün maddi ve somut bir temelin eksik ya da sağlam olduğuna işaret ediyor; önce ayaklarını yere sağlam basman gerekiyor.";
+  if(aett === 1) return "Bu rün bir sınav veya dönüşüm evresinde olduğunu gösteriyor; dirençle değil kabullenmeyle ilerlemen gerekiyor.";
+  return "Bu rün toplumsal ya da ilişkisel bir denge arayışına işaret ediyor; net bir sınır çizmen ya da doğru kişiyle bağ kurman gerekiyor.";
+}
+
+/* ============================================================
    KARTLARA VE TEMAYA GÖRE DİNAMİK VADE MOTORU
    ============================================================ */
 function calculateDynamicTarotVade(slots, topic) {
@@ -1054,65 +1299,8 @@ document.getElementById("tarotInterpretBtn").addEventListener("click", ()=>{
     topic = "love";
   }
 
-  // 2. ELEMENT DAĞILIMI
-  const elements = cards.map(c => c.element || "Toprak");
-  const countElem = (elem) => elements.filter(e => e === elem).length;
-  const fireCount = countElem("Ateş");
-  const waterCount = countElem("Su");
-  const airCount = countElem("Hava");
-  const earthCount = countElem("Toprak");
-
-  let elemSentez = "";
-  if(fireCount >= 2) elemSentez = "Masada Ateş baskın; durum çok hızlı, tutkulu ve anlık kararlarla kaynıyor. Ancak fevri çıkışlar kontrolü zorlaştırabilir.";
-  else if(waterCount >= 2) elemSentez = "Kartlarda Su elementi yoğun; duygusal dalgalanmalar, gizli hisler, özlemler ve hassasiyetler mantığın tamamen önüne geçmiş durumda.";
-  else if(airCount >= 2) elemSentez = "Kartlar Hava ağırlıklı; strateji, arka planda dönen planlar, zihinsel hesaplar ve keskin kararlar devrede.";
-  else if(earthCount >= 2) elemSentez = "Toprak enerjisi masayı tutuyor; somut güven arayışı, inatlaşmalar ve sağlam adımlar ön planda; süreç beklediğinden daha ağır işleyebilir.";
-  else elemSentez = "Elementler dengeli dökülmüş; durumun hem kalbi hem mantığı hem de somut şartları aynı anda tarttığı bir eşiktesiniz.";
-
-  // 3. SERT / OLUMSUZ KART ANALİZİ
-  const hardCards = ["Kule", "Ölüm", "Şeytan", "Kılıç Üçlüsü", "Kılıç Onlusu", "Kılıç Beşlisi", "Kılıç Sekizlisi", "Kılıç Dokuzlusu", "Tılsım Beşlisi"];
-  const hasHardOutcome = hardCards.includes(outcomeCard.name);
-  const isNegativeVibe = (reversedCount >= Math.ceil(tarotSlots.length / 2)) || (hasHardOutcome && isOutcomeReversed);
-
-  // 4. DİNAMİK VADE
-  const dynamicVade = calculateDynamicTarotVade(tarotSlots, topic);
-
-  let ozetHTML = "";
-
-  if(topic === "career") {
-    if(isNegativeVibe) {
-      ozetHTML = `
-        <p>Açılan kartların kariyer planlarınla ilgili ortaya koyduğu tablo son derece açık ve tavizsiz: Danıştığın iş, başvuru veya mülakat sürecinde masada görünmeyen engeller, kadro pürüzleri ya da adil işlemeyen bir değerlendirme mekanizması var. Masanın nihai kartı olan <strong>${outcomeCard.mark} ${outcomeCard.name} (${isOutcomeReversed ? 'Ters' : 'Düz'})</strong>, buraya körü körüne umut bağlamanın seni yıpratacağını, şartların beklediğin şeffaflıkta ilerlemediğini gösteriyor.</p>
-        <p><strong>Sürecin Gidişatı ve Vade:</strong> ${elemSentez} Bu süreçle ilgili olarak önümüzdeki <strong>${dynamicVade}</strong> içinde bir geri dönüş ya da haber kapını çalabilir; ancak alacağın teklif veya şartlar beklentilerini tam olarak karşılamayabilir. Kartların buradaki en büyük öğüdü, enerjini tek bir kapıya bağlayıp beklemek yerine hemen yeni alternatiflere ve farklı başvurulara odaklanmandır.</p>
-      `;
-    } else {
-      ozetHTML = `
-        <p>Kartların kariyerine dair verdiği hüküm son derece sağlam ve umut verici temellere dayanıyor. Masadaki enerji, yaptığın başvurunun veya sergilediğin emeğin arka planda yetkili kişilerin dikkatini çektiğini gösteriyor. Süreç dışarıdan biraz sessiz ya da ağır ilerliyor gibi görünse de kurumsal çarklar senin lehine dönüyor.</p>
-        <p><strong>Netleşme ve Teklif Vadesi:</strong> ${elemSentez} Sonuç hanesinde parlayan <strong>${outcomeCard.mark} ${outcomeCard.name} (${isOutcomeReversed ? 'Ters' : 'Düz'})</strong> kartı, resmi bir geri dönüşün, mülakat teklifinin veya kabul müjdesinin <strong>${dynamicVade}</strong> gerçekleşeceğini gösteriyor.</p>
-        <p><strong>Falın Önerisi:</strong> Bu süreçte özgüvenini yüksek tutmalı, görüşmelerde değerini düşürmeden şartları açıkça konuşmalısın. Sen sağlam durdukça istediklerini kabul ettirme şansın katlanarak artacak.</p>
-      `;
-    }
-  } else if(topic === "love") {
-    if(isNegativeVibe) {
-      ozetHTML = `
-        <p>İlişki dinamiğinde kartlar sahte umut vermiyor: Aranızdaki bağ şu an yoğun bir ego savaşına, kırgınlıklara ve iletişimsizlik duvarına takılmış durumda. Masanın nihai netice kartı olan <strong>${outcomeCard.mark} ${outcomeCard.name} (${isOutcomeReversed ? 'Ters' : 'Düz'})</strong>, karşı tarafın kendi kabuğuna çekildiğini ve adım atsa dahi aynı kısır döngüleri tekrarlama riskini taşıdığını açıkça gösteriyor.</p>
-        <p><strong>Kritik Eşik ve Vade:</strong> ${elemSentez} Kartların kozmik ritmine göre önümüzdeki <strong>${dynamicVade}</strong> dolaylı bir hareketlenme, sosyal medyadan bir yoklama ya da sıradan bir mesaj ihtimali masada beliriyor. Ancak bu temas aradığın samimi pişmanlığı getirmeyebilir.</p>
-        <p><strong>Falın Tavsiyesi:</strong> Kartlar, kendi değerini karşı tarafın belirsiz ve tutarsız ilgisine bağlamaktan artık vazgeçmen gerektiğini sertçe fısıldıyor. Sen sınırlarını koruyup geri çekilmedikçe karşı taraf gerçek bir yüzleşmeye yanaşmayacaktır.</p>
-      `;
-    } else {
-      ozetHTML = `
-        <p>Kartların bu açılımdaki ortak dili bize şunu anlatıyor: Karşı taraf şu an hayatına devam ediyormuş, hiçbir şey olmamış gibi bir hava çizmeye çalışsa da gerçekte aklında sürekli seninle ilgili sorular dönüyor. 'Acaba beni tamamen sildi mi?', 'Şu an ne yapıyor?' düşüncesi onda bastırmaya çalıştığı gizli bir merak haline gelmiş. Kartların gidişatı gösteriyor ki, aranızdaki bu sessizlik dönemi kalıcı değil; çünkü kafasında ördüğü duvarlar kalbindeki boşluğu kapatmaya yetmiyor.</p>
-        <p><strong>Kartların Belirlediği Özel Vade:</strong> Masanın nihai sonucunu belirleyen <strong>${outcomeCard.mark} ${outcomeCard.name} (${isOutcomeReversed ? 'Ters' : 'Düz'})</strong> kartının element hızına ve ritmine baktığımızda, bu durumun somut bir temasa ve konuşmaya dönüşeceği eşik <strong>${dynamicVade}</strong> olarak açılıyor. Bu süre zarfında plansız bir temas veya beklenmedik bir bahaneyle kapının çalınması masada açıkça görünüyor.</p>
-        <p><strong>Falın Önerisi:</strong> Burada dikkat etmen gereken en önemli nokta şu: Karşı taraf ilk teması kurduğunda hemen eski kırgınlıkları masaya dökmemelisin. Eğer ilk anda savunmaya geçip hesap sorarsan hemen kabuğuna çekilir. Bırak ne kadar samimi olduğunu kendisi ortaya koysun. Sen sakinliğini ve sınırlarını korudukça ipler tamamen senin istediğin yöne doğru çekilecek.</p>
-      `;
-    }
-  } else {
-    ozetHTML = `
-      <p>Niyet ettiğin meselenin genel akışına baktığımızda, hayatında bir dönüm noktasının eşiğinde olduğun görülüyor. Masadaki kart kombinasyonu kararsızlıkla vakit kaybetmek yerine somut sınırlar çizmenin ve net kararlar almanın önünü açacağını gösteriyor.</p>
-      <p><strong>Gelişmelerin Vadesi:</strong> ${elemSentez} Sonuç kartın olan <strong>${outcomeCard.mark} ${outcomeCard.name} (${isOutcomeReversed ? 'Ters' : 'Düz'})</strong> enerjisiyle birlikte, bu durumun kaderinde çözüleceği zaman eşiği <strong>${dynamicVade}</strong> olarak tecelli etmektedir.</p>
-      <p><strong>Tavsiye:</strong> Karşına çıkacak fırsatları tereddütle ertelemek yerine ilk sezgine güvenerek adım atmalısın; kontrolü elinde tuttuğun sürece sonuç senin lehine şekillenecektir.</p>
-    `;
-  }
+  // 2. FALIN ÖZETİ ARTIK GERÇEK KART KOMBİNASYONUNDAN ÜRETİLİYOR
+  let ozetHTML = synthesizeTarotOzet(tarotSlots, topic, q);
 
   let positionsBreakdown = tarotSlots.map(s => {
     const orientation = s.reversed ? "Ters Pozisyon" : "Düz Pozisyon";
@@ -1245,6 +1433,7 @@ document.getElementById("erilDisilInterpretBtn").addEventListener("click", ()=>{
   const d2 = disilSlots[2].card, d2R = disilSlots[2].reversed;
 
   const erilVade = calculateDynamicErilVade(erilSlots[2]);
+  const disilDign = getDignity(e2.element, d2.element);
 
   resArea.innerHTML = `
     <div class="result-body">
@@ -1269,7 +1458,7 @@ document.getElementById("erilDisilInterpretBtn").addEventListener("click", ()=>{
 
           <div style="background:rgba(138,51,71,0.08); padding:18px; border-radius:12px; margin:20px 0; border:1px solid var(--line);">
             <h4 style="color:#e28fa0; font-size:18px; margin-bottom:10px; border:none; padding:0;">✦ FALIN ÖZETİ: İHTİMALLER, TEHLİKELER VE STRATEJİK ÖNERİ</h4>
-            <p><strong>Masanın Enerji Analizi:</strong> Masadaki kartlar iki taraf arasında sessiz ama çok şiddetli bir güç savaşı yaşandığını gösteriyor. Eril enerji, dişilin hala kendisini düşündüğünü bilmek ve kontrolün kendisinde olduğunu hissetmek istiyor. Ancak dişil enerjinin geri çekilmesi ve tepkisiz kalması, erilin kafasındaki tüm rahatlığı darmadağın etmiş durumda. Eril şu an kaybetme korkusuyla gurur arasında sıkışmış vaziyette.</p>
+            <p><strong>Masanın Enerji Analizi:</strong> Eril tarafın eylem kartı ${e2.name} ile Dişil tarafın tavır kartı ${d2.name}, element bazında ${DIGNITY_PHRASE[disilDign.tip]}: ${disilDign.not} Bu, iki tarafın hamlelerinin birbiriyle nasıl karşılaşacağının en somut göstergesi.</p>
             
             <p><strong>Önünüzdeki Olası İhtimaller:</strong><br>
             • <em>1. İhtimal (Taviz Verilirse):</em> Eğer dişil taraf erilden önce davranır veya erilin atacağı yarım yamalak bir mesaja anında kollarını açarak cevap verirse, eril taraf hemen rahatlayacak ve eski umursamaz tavırlarına geri dönecektir.<br>
@@ -1380,8 +1569,7 @@ document.getElementById("katinaInterpretBtn").addEventListener("click", ()=>{
 
   const mainCard = katinaSlots[0].card;
   const isReversed = katinaSlots[0].reversed;
-  const katinaVade = calculateDynamicKatinaVade(katinaSlots);
-  const neticeKatinaCard = katinaSlots[katinaSlots.length - 1].card.name;
+  const ozetHTML = synthesizeKatinaOzet(katinaSlots, q);
 
   resArea.innerHTML = `
     <div class="result-body" style="border-color:rgba(138,51,71,0.5);">
@@ -1401,8 +1589,7 @@ document.getElementById("katinaInterpretBtn").addEventListener("click", ()=>{
 
           <div style="background:rgba(138,51,71,0.08); padding:18px; border-radius:12px; margin:20px 0; border:1px solid var(--line);">
             <h4 style="color:#e28fa0; font-size:18px; margin-bottom:10px; border:none; padding:0;">✦ FALIN ÖZETİ</h4>
-            <p>Katina kartlarının verdiği en net hüküm şudur: Aranızdaki bu kopukluk hislerin bitmesinden değil, dış faktörlerin ve çevrenin yarattığı huzursuzluktan kaynaklanıyor. Karşı tarafın etrafında onun aklını karıştıran veya aradaki pürüzleri büyüten durumlar var.</p>
-            <p><strong>Katina'nın Kadersel Vadesi:</strong> Hüküm hanesinde açılan <strong>${neticeKatinaCard}</strong> sembolünün ağırlığına baktığımızda, bu durumun çözüleceği ve net bir adımın geleceği zaman aralığı <strong>${katinaVade}</strong> olarak işaretlenmiştir.</p>
+            ${ozetHTML}
             <p><strong>Katina'nın Sert Uyarısı:</strong> Karşı taraf sana net ve sağlam bir niyetle gelmedikçe yarım yamalak yoklamalarına prim vermemelisin. Taviz vermez ve dik durursan, gerçek niyetini açıkça ortaya koymak zorunda kalacaktır.</p>
           </div>
 
@@ -1517,18 +1704,7 @@ document.getElementById("runeInterpretBtn").addEventListener("click", ()=>{
   }).join("");
 
   const firstRune = runeSlots[0].rune;
-  const lastRune = runeSlots[runeSlots.length - 1].rune;
-  
-  const fastRunes = ["Fehu", "Kenaz", "Wunjo", "Sowilo", "Dagaz", "Raidho"];
-  const slowRunes = ["Isa", "Nauthiz", "Hagalaz", "Jera", "Eihwaz", "Othala"];
-  let runeVade = "";
-  if(fastRunes.includes(lastRune.name)) {
-    runeVade = "4 ila 9 gün içinde çok hızlı ve aydınlatıcı bir haberle";
-  } else if(slowRunes.includes(lastRune.name)) {
-    runeVade = "4 ila 7 haftalık sabırlı bir bekleme ve olgunlaşma evresiyle";
-  } else {
-    runeVade = "2 ila 3 haftalık kararlı bir süreçle";
-  }
+  const ozetHTML = synthesizeRuneOzet(runeSlots, q);
 
   resArea.innerHTML = `
     <div class="result-body" style="border-color:rgba(155,139,180,0.4);">
@@ -1546,8 +1722,7 @@ document.getElementById("runeInterpretBtn").addEventListener("click", ()=>{
 
           <div style="background:rgba(155,139,180,0.08); padding:18px; border-radius:12px; margin:20px 0; border:1px solid var(--line);">
             <h4 style="color:var(--lavender); font-size:18px; margin-bottom:10px; border:none; padding:0;">✦ FALIN ÖZETİ</h4>
-            <p>Rünlerin masadaki dizilişi gösteriyor ki, bu meselede artık eski usullerle sonuç alamazsın. Karşı tarafın belirsiz tavırlarına uyum sağlamaya çalışmak seni sadece yıpratır. Şu an yaşanan durgunluk aslında senin lehinedir; çünkü senin sessiz kalman karşı tarafın kafasındaki tüm planları altüst ediyor.</p>
-            <p><strong>Rünlerin Belirlediği Zaman Eşiği:</strong> Sonuç hanesindeki <strong>${lastRune.name}</strong> taşının kozmik ritmine göre bu belirsizliğin dağılacağı an <strong>${runeVade}</strong> olarak tecelli etmektedir.</p>
+            ${ozetHTML}
             <p><strong>Kadim Tavsiye:</strong> Ne olursa olsun değerinden ödün verme, yarım konuşmalara netlik talep ederek yanıt ver. Kontrolü elinde tuttuğun sürece sonuç istediğin şekilde netleşecektir.</p>
           </div>
 
