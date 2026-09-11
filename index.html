@@ -1679,21 +1679,36 @@ document.getElementById("runeInterpretBtn").addEventListener("click", ()=>{
 });
 
 /* ============================================================
-   NUMEROLOJİ (RUH & KİŞİLİK KARTI)
+   NUMEROLOJİ (RUH & KİŞİLİK KARTI DOĞRU AYRIM MOTORU)
    ============================================================ */
-function sumDigits(num){ return num.toString().split('').reduce((acc, d) => acc + parseInt(d, 10), 0); }
+function sumDigits(num){ 
+  return num.toString().split('').reduce((acc, d) => acc + parseInt(d, 10), 0); 
+}
 
 function calculateTarotBirthCards(d, m, y){
   const total = d + m + y;
+  
   let pNum = sumDigits(total);
-  if(pNum > 22) pNum = sumDigits(pNum);
+  while (pNum > 22) {
+    pNum = sumDigits(pNum);
+  }
+  
   let sNum = pNum;
-  if(pNum > 9) sNum = sumDigits(pNum);
+  if (pNum === 22) {
+    sNum = 4;
+  } else if (pNum > 9) {
+    sNum = sumDigits(pNum);
+    if (sNum > 9) sNum = sumDigits(sNum);
+  }
 
   const mapIndex = (val) => (val === 22 || val === 0) ? 0 : val;
+  
   const personalityCard = TAROT_DECK.find(c => c.arcana === "major" && (c.id === "tm" + mapIndex(pNum)));
   const soulCard = TAROT_DECK.find(c => c.arcana === "major" && (c.id === "tm" + mapIndex(sNum)));
-  return { personalityCard, soulCard, pNum, sNum };
+  
+  const isSameCard = (personalityCard.id === soulCard.id);
+
+  return { personalityCard, soulCard, pNum, sNum, isSameCard };
 }
 
 document.getElementById("calcSoulBtn").addEventListener("click", ()=>{
@@ -1706,28 +1721,49 @@ document.getElementById("calcSoulBtn").addEventListener("click", ()=>{
     return;
   }
 
-  const { personalityCard, soulCard, pNum, sNum } = calculateTarotBirthCards(d, m, y);
+  const { personalityCard, soulCard, pNum, sNum, isSameCard } = calculateTarotBirthCards(d, m, y);
   const resArea = document.getElementById("soulResultArea");
   resArea.classList.remove("hidden");
 
+  let soulRelationNote = isSameCard
+    ? `<p style="text-align:center; font-size:13.5px; color:var(--gold-bright); margin-bottom:16px;">
+        ✦ <strong>Tekil Arketip:</strong> Kişilik ve Ruh sayın aynı frekansta (${pNum}). Bu dünyadaki dışsal duruşunla ruhunun içsel tekamül amacı birbiriyle doğrudan örtüşüyor; ikilik yaşamadan tek bir ana ders üzerinden ilerliyorsun.
+       </p>`
+    : `<p style="text-align:center; font-size:13.5px; color:var(--parchment-dim); margin-bottom:16px;">
+        ✦ <strong>Çift Arketip Dengesi:</strong> Dış dünyada <strong>${personalityCard.name} (${pNum})</strong> maskesiyle hayatı deneyimlerken, içsel derinliğinde ve ruhunun gerçek özünde <strong>${soulCard.name} (${sNum})</strong> enerjisi seni yönetiyor.
+       </p>`;
+
   resArea.innerHTML = `
     <div class="result-body">
-      <h3 style="font-size:22px; color:var(--gold-bright); text-align:center; margin-bottom:6px;">Doğum Tarihi Analizin</h3>
-      <p style="text-align:center; font-size:13.5px; color:var(--parchment-dim); margin-bottom:18px;">
+      <h3 style="font-size:22px; color:var(--gold-bright); text-align:center; margin-bottom:6px;">Doğum Tarihi Numerolojisi</h3>
+      <p style="text-align:center; font-size:13.5px; color:var(--parchment-dim); margin-bottom:12px;">
         Doğum Tarihi: <strong>${d}.${m}.${y}</strong> · Kişilik Sayısı: <strong>${pNum}</strong> · Ruh Sayısı: <strong>${sNum}</strong>
       </p>
+      ${soulRelationNote}
       <div class="soul-result-cards">
         <div class="soul-card-box">
-          <span style="font-size:11px; text-transform:uppercase; color:var(--gold-bright); font-weight:600;">Kişilik Kartı (Dış Dünya Duruşu)</span>
-          <div style="font-size:20px; font-family:'Cormorant Garamond',serif;">${personalityCard.mark} ${personalityCard.name}</div>
-          <div class="trait-box"><div style="font-size:11px; font-weight:600; color:var(--parchment);">Güçlü Yönlerin &amp; Tavrın</div><p style="margin:0; font-size:13px; color:var(--parchment-dim);">${personalityCard.upright}</p></div>
-          <div class="trait-box shadow"><div style="font-size:11px; font-weight:600; color:var(--parchment);">Ters / Zorlandığın Alanlar</div><p style="margin:0; font-size:13px; color:var(--parchment-dim);">${personalityCard.reversed}</p></div>
+          <span style="font-size:11px; text-transform:uppercase; color:var(--gold-bright); font-weight:600;">Kişilik Kartı (Dış Dünya Duruşu &amp; Rolün)</span>
+          <div style="font-size:20px; font-family:'Cormorant Garamond',serif;">${personalityCard.mark} ${personalityCard.name} (${pNum})</div>
+          <div class="trait-box">
+            <div style="font-size:11px; font-weight:600; color:var(--parchment);">Dış Dünyadaki Gücün &amp; Davranış Tarzın</div>
+            <p style="margin:0; font-size:13px; color:var(--parchment-dim);">${personalityCard.upright}</p>
+          </div>
+          <div class="trait-box shadow">
+            <div style="font-size:11px; font-weight:600; color:var(--parchment);">Tökezlediğin / Gölge Masken</div>
+            <p style="margin:0; font-size:13px; color:var(--parchment-dim);">${personalityCard.reversed}</p>
+          </div>
         </div>
         <div class="soul-card-box">
-          <span style="font-size:11px; text-transform:uppercase; color:var(--gold-bright); font-weight:600;">Ruh Kartı (İçsel İhtiyaç)</span>
-          <div style="font-size:20px; font-family:'Cormorant Garamond',serif;">${soulCard.mark} ${soulCard.name}</div>
-          <div class="trait-box"><div style="font-size:11px; font-weight:600; color:var(--parchment);">İçsel Potansiyelin</div><p style="margin:0; font-size:13px; color:var(--parchment-dim);">${soulCard.upright}</p></div>
-          <div class="trait-box shadow"><div style="font-size:11px; font-weight:600; color:var(--parchment);">Ters / Aşman Gereken Engel</div><p style="margin:0; font-size:13px; color:var(--parchment-dim);">${soulCard.reversed}</p></div>
+          <span style="font-size:11px; text-transform:uppercase; color:var(--gold-bright); font-weight:600;">Ruh Kartı (Ruhun Asıl Tekamül Dersi)</span>
+          <div style="font-size:20px; font-family:'Cormorant Garamond',serif;">${soulCard.mark} ${soulCard.name} (${sNum})</div>
+          <div class="trait-box">
+            <div style="font-size:11px; font-weight:600; color:var(--parchment);">Ruhunun Asıl İhtiyacı &amp; Öz Potansiyeli</div>
+            <p style="margin:0; font-size:13px; color:var(--parchment-dim);">${soulCard.upright}</p>
+          </div>
+          <div class="trait-box shadow">
+            <div style="font-size:11px; font-weight:600; color:var(--parchment);">Ruhsal Düzeyde Aşman Gereken Kök Sınav</div>
+            <p style="margin:0; font-size:13px; color:var(--parchment-dim);">${soulCard.reversed}</p>
+          </div>
         </div>
       </div>
       ${renderExtraQuestionSection('soulExtra')}
