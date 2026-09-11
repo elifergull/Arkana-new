@@ -207,14 +207,17 @@ input:checked + .slider:before{transform:translateX(20px);}
 
 .modal-backdrop{position:fixed;inset:0;background:rgba(9,6,15,0.92);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:1000;padding:24px;}
 .modal-backdrop.open{display:flex;}
-.modal-fullscreen{background:var(--bg-panel);border:1px solid var(--gold);border-radius:20px;max-width:850px;width:100%;height:90vh;max-height:800px;padding:40px;display:flex;flex-direction:column;position:relative;box-shadow:0 20px 50px rgba(0,0,0,0.8);}
-.modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:20px;border-bottom:1px solid var(--line);padding-bottom:16px;}
-.modal-head h3{font-size:32px;color:var(--gold-bright);font-family:'Cormorant Garamond',serif;}
+.modal-fullscreen{background:var(--bg-panel);border:1px solid var(--gold);border-radius:20px;max-width:850px;width:100%;height:90vh;max-height:800px;padding:36px;display:flex;flex-direction:column;position:relative;box-shadow:0 20px 50px rgba(0,0,0,0.8);}
+.modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:16px;border-bottom:1px solid var(--line);padding-bottom:14px;}
+.modal-head h3{font-size:28px;color:var(--gold-bright);font-family:'Cormorant Garamond',serif;}
 .modal-close{background:none;border:none;color:var(--parchment-dim);font-size:32px;cursor:pointer;line-height:1;}
-.modal-content-scroll{overflow-y:auto;flex:1;padding-right:10px;}
+.modal-content-scroll{overflow-y:auto;flex:1;padding-right:12px;}
 .modal-content-scroll::-webkit-scrollbar{width:6px;}
 .modal-content-scroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
-.modal-content-scroll p{font-size:16px;line-height:2.0;color:var(--parchment);text-align:justify;margin:0 0 18px;}
+.modal-content-scroll p{font-size:15px;line-height:1.85;color:var(--parchment);text-align:justify;margin:0 0 14px;}
+
+.detail-section-box{background:var(--bg-panel-2);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:12px 0;}
+.detail-section-box h5{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--gold-bright);margin:0 0 6px;}
 
 .num-form-wrap{max-width:500px;margin:0 auto 24px;text-align:center;}
 .num-inputs{display:flex;gap:10px;justify-content:center;margin:16px 0;}
@@ -1021,7 +1024,7 @@ function handleExtraQuestion(sectionId){
 }
 
 /* ============================================================
-   BİLGELİK OKULU
+   BİLGELİK OKULU (DERİNLEŞTİRİLMİŞ ANSİKLOPEDİK KÜTÜPHANE)
    ============================================================ */
 function renderSchool(filter = 'all'){
   const grid = document.getElementById("schoolGrid");
@@ -1047,12 +1050,81 @@ function openSchoolCardDetail(type, idx){
   else if(type === 'katina') item = KATINA_DECK[idx];
   else item = RUNE_DECK[idx];
 
-  openSchoolModalContent(item.mark + " " + item.name, `
-    <p><strong>Tür:</strong> ${item.category || item.element || 'İskandinav Rünü'}</p>
-    <p><strong>Düz Anlamı:</strong> ${item.upright}</p>
-    <p><strong>Ters Anlamı:</strong> ${item.reversed}</p>
-    <p><strong>Açıklama:</strong> Bu kart veya sembol açılışlarda çıktığı zaman niyet edilen durumun gizli kalan dinamiklerini, kişinin niyetini ve karşılıklı adımları temsil eder.</p>
-  `);
+  let bodyHTML = "";
+
+  if(type === 'tarot') {
+    const isMajor = (item.arcana === 'major');
+    bodyHTML = `
+      <div class="detail-section-box">
+        <h5>✦ Arketipsel Kimlik &amp; Sembolizm</h5>
+        <p><strong>Seri / Sınıf:</strong> ${isMajor ? 'Büyük Arkana (Ruhun Kadersel Yolculuğu)' : 'Küçük Arkana (' + item.element + ' Elementi - Günlük Yaşam)'} · <strong>Numara/Unvan:</strong> ${item.num}</p>
+        <p><strong>Ezoterik Anlamı:</strong> ${item.name}, insan bilincinin evrensel bir eşiğini temsil eder. ${isMajor ? 'Kişinin kendi iradesinin ötesindeki kadersel tekamül döngüsünü ve ruhsal uyanışını simgeler.' : item.element + ' elementinin zemininde gelişen somut pratik durumları ve karar anlarını yönetir.'}</p>
+      </div>
+
+      <div class="detail-section-box">
+        <h5>✦ Açılımlarda Düz &amp; Ters Konum</h5>
+        <p><strong>Düz Açılım (Işık Yönü):</strong> ${item.upright}</p>
+        <p><strong>Ters Açılım (Gölge Yönü):</strong> ${item.reversed}</p>
+      </div>
+
+      <div class="detail-section-box">
+        <h5>✦ Yaşam Alanlarına Yansıması</h5>
+        <p><strong>Aşk &amp; İlişkiler:</strong> ${isMajor ? 'Kadersel bir karşılaşma, ruh eşliği veya aşılması gereken köklü bir bağımlılık sınavıdır. Yüzeydeki sorunların altında derin bilinçaltı kodları yatar.' : 'Günlük tavırlar, söylenen veya gizlenen sözler üzerinden ilerler. Duyguların dürüstçe masaya konması gereken bir dönemeçtir.'}</p>
+        <p><strong>Kariyer &amp; Para:</strong> ${item.element === 'Toprak' ? 'Maddi güvence, sağlam temeller ve somut kazançlar söz konusudur.' : (item.element === 'Ateş' ? 'Yeni girişimler, cesaret ve hızlı terfi fırsatları ön plandadır.' : (item.element === 'Hava' ? 'Sözleşmeler, hukuki süreçler ve analitik stratejiler belirleyicidir.' : 'İş ortamındaki sezgiler, yaratıcı projeler ve insan ilişkileri ağırlık kazanır.'))}</p>
+        <p><strong>Kartın Uyarısı:</strong> Rehavete kapılma; kontrol sende gibi görünse bile kibirden ve fevri adımlardan kaçınmalısın.</p>
+      </div>
+    `;
+  } else if(type === 'katina') {
+    bodyHTML = `
+      <div class="detail-section-box">
+        <h5>⚜ İzmir Cadı Geleneği &amp; Katina Mirası</h5>
+        <p><strong>Kartın Sınıfı:</strong> ${item.category} · <strong>Sembol / İskambil Karşılığı:</strong> ${item.symbolTag}</p>
+        <p><strong>Kadim Mahiyeti:</strong> Katina Desteia destesinde ${item.name}, İzmir'in kadim kehanet kültüründen süzülen çok net ve sert bir hakikati simgeler. Lafı dolandırmaz; aradaki kişileri, gizli düşmanlıkları veya kadersel mühürleri doğrudan ortaya koyar.</p>
+      </div>
+
+      <div class="detail-section-box">
+        <h5>⚜ Hüküm ve Teşhis</h5>
+        <p><strong>Düz Geldiğinde (Açık Enerji):</strong> ${item.upright}</p>
+        <p><strong>Ters Geldiğinde (Tıkanıklık &amp; İhanet):</strong> ${item.reversed}</p>
+      </div>
+
+      <div class="detail-section-box">
+        <h5>⚜ İlişki Dinamiği &amp; Kişi Tahlili</h5>
+        <p><strong>Kişi / Durum Temsili:</strong> ${item.category.includes('Kişi') || item.category.includes('Kadın') || item.category.includes('Erkek') || item.category.includes('Kral') ? 'Bu kart masada doğrudan etki eden canlı bir şahsı simgeler. Duyguları yönlendiren, araya giren veya sadakati belirleyen ana aktördür.' : 'Bu kart aradaki bağı test eden kadersel bir durumu, mühürlü bir engeli veya aşılması zorunlu bir sınavı gösterir.'}</p>
+        <p><strong>Katina'nın Öğüdü:</strong> Gözünü aç; sözlere değil eylemlere ve perde arkasında çevrilen işlere odaklan. Taviz verdiğin her an kendi gücünü başkasına teslim edersin.</p>
+      </div>
+    `;
+  } else {
+    // Rune
+    const rIndex = parseInt(item.id.slice(1), 10);
+    const aettIdx = Math.floor(rIndex / 8);
+    const aettList = [
+      "Freyr'in Aett'i (Maddi Varoluş, Yaşamın Temel İhtiyaçları ve Bereket)",
+      "Hagal'ın Aett'i (Dönüşüm, Krizler, Doğa Güçleri ve Kaçınılmaz Sınavlar)",
+      "Tyr'ın Aett'i (Ruhsal Zafer, Adalet, Savaşçı İradesi ve Bütünlük)"
+    ];
+    bodyHTML = `
+      <div class="detail-section-box">
+        <h5>ᛟ Elder Futhark &amp; Nors Mitolojisi</h5>
+        <p><strong>Rünik Harf / Sembol:</strong> ${item.mark} · <strong>Ait Olduğu Aile (Aett):</strong> ${aettList[aettIdx]}</p>
+        <p><strong>Kadim Anlamı:</strong> ${item.name} rünü, İskandinav evren tasavvurunda Yggdrasill'in dokuz diyarından akan kozmik bir yasayı temsil eder. Bir fal kartından öte, doğrudan eyleme geçirilmesi gereken bir irade ve korunma şifresidir.</p>
+      </div>
+
+      <div class="detail-section-box">
+        <h5>ᛟ Rünün Kozmik Mesajı</h5>
+        <p><strong>Kadim Hüküm:</strong> ${item.upright}</p>
+        <p><strong>Savaşçı Rehberliği:</strong> Rünler teslimiyetçi bir kader anlayışını reddeder. Bu taş açıldığında önündeki sınavı pasifçe beklemek yerine, kalkanını kuşanıp kendi sınırlarını net bir şekilde çizmeni emreder.</p>
+      </div>
+
+      <div class="detail-section-box">
+        <h5>ᛟ Yaşam Yolunda Nasıl Kullanılır?</h5>
+        <p><strong>Eylem Tavsiyesi:</strong> Tereddüt ve korku zihnin düşmanıdır. Belirsizliği ortadan kaldırmak için hakikati doğrudan talep et ve bedeli ne olursa olsun dürüstlükten sapma.</p>
+        <p><strong>Rün Vadesi:</strong> Rünlerin enerjisi kararlı adımlarla hızlanır; ertelediğin her gün sınavın ağırlığını artırır.</p>
+      </div>
+    `;
+  }
+
+  openSchoolModalContent(item.mark + " " + item.name + " · Bilgelik Analizi", bodyHTML);
 }
 
 /* ============================================================
@@ -1686,31 +1758,25 @@ function sumDigits(num){
 }
 
 function calculateTarotBirthCards(d, m, y){
-  // 1. Gün, Ay ve Yılın ayrı ayrı basamak toplamları (Klasik Mary K. Greer Formülü)
   const dSum = sumDigits(d);
   const mSum = sumDigits(m);
   const ySum = sumDigits(y);
 
   let pTotal = dSum + mSum + ySum;
 
-  // 2. Kişilik Kartı (1 - 22 Arası)
   while (pTotal > 22) {
     pTotal = sumDigits(pTotal);
   }
   const pNum = pTotal;
 
-  // 3. Ruh Kartı (1 - 9 Arası)
-  // Kişilik Kartı 10-22 arasındaysa basamakları toplanarak kök arketipe (Ruh Kartına) ulaşılır.
-  // Kişilik Kartı 1-9 arasındaysa Ruh Kartı da aynı frekanstadır.
   let sNum = pNum;
   if (pNum === 22) {
-    sNum = 4; // 2 + 2 = 4 (İmparator)
+    sNum = 4;
   } else if (pNum > 9) {
     sNum = sumDigits(pNum);
     if (sNum > 9) sNum = sumDigits(sNum);
   }
 
-  // 22 veya 0 = Deli (The Fool)
   const mapIndex = (val) => (val === 22 || val === 0) ? 0 : val;
 
   const personalityCard = TAROT_DECK.find(c => c.arcana === "major" && (c.id === "tm" + mapIndex(pNum)));
