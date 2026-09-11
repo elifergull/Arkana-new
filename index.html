@@ -1679,33 +1679,43 @@ document.getElementById("runeInterpretBtn").addEventListener("click", ()=>{
 });
 
 /* ============================================================
-   NUMEROLOJİ (RUH & KİŞİLİK KARTI DOĞRU AYRIM MOTORU)
+   NUMEROLOJİ (KİŞİLİK VE RUH KARTI DOĞRU HESAPLAMA MOTORU)
    ============================================================ */
 function sumDigits(num){ 
   return num.toString().split('').reduce((acc, d) => acc + parseInt(d, 10), 0); 
 }
 
 function calculateTarotBirthCards(d, m, y){
-  const total = d + m + y;
-  
-  let pNum = sumDigits(total);
-  while (pNum > 22) {
-    pNum = sumDigits(pNum);
+  // 1. Gün, Ay ve Yılın ayrı ayrı basamak toplamları (Klasik Mary K. Greer Formülü)
+  const dSum = sumDigits(d);
+  const mSum = sumDigits(m);
+  const ySum = sumDigits(y);
+
+  let pTotal = dSum + mSum + ySum;
+
+  // 2. Kişilik Kartı (1 - 22 Arası)
+  while (pTotal > 22) {
+    pTotal = sumDigits(pTotal);
   }
-  
+  const pNum = pTotal;
+
+  // 3. Ruh Kartı (1 - 9 Arası)
+  // Kişilik Kartı 10-22 arasındaysa basamakları toplanarak kök arketipe (Ruh Kartına) ulaşılır.
+  // Kişilik Kartı 1-9 arasındaysa Ruh Kartı da aynı frekanstadır.
   let sNum = pNum;
   if (pNum === 22) {
-    sNum = 4;
+    sNum = 4; // 2 + 2 = 4 (İmparator)
   } else if (pNum > 9) {
     sNum = sumDigits(pNum);
     if (sNum > 9) sNum = sumDigits(sNum);
   }
 
+  // 22 veya 0 = Deli (The Fool)
   const mapIndex = (val) => (val === 22 || val === 0) ? 0 : val;
-  
+
   const personalityCard = TAROT_DECK.find(c => c.arcana === "major" && (c.id === "tm" + mapIndex(pNum)));
   const soulCard = TAROT_DECK.find(c => c.arcana === "major" && (c.id === "tm" + mapIndex(sNum)));
-  
+
   const isSameCard = (personalityCard.id === soulCard.id);
 
   return { personalityCard, soulCard, pNum, sNum, isSameCard };
@@ -1727,10 +1737,10 @@ document.getElementById("calcSoulBtn").addEventListener("click", ()=>{
 
   let soulRelationNote = isSameCard
     ? `<p style="text-align:center; font-size:13.5px; color:var(--gold-bright); margin-bottom:16px;">
-        ✦ <strong>Tekil Arketip:</strong> Kişilik ve Ruh sayın aynı frekansta (${pNum}). Bu dünyadaki dışsal duruşunla ruhunun içsel tekamül amacı birbiriyle doğrudan örtüşüyor; ikilik yaşamadan tek bir ana ders üzerinden ilerliyorsun.
+        ✦ <strong>Tekil Arketip:</strong> Kişilik ve Ruh sayın aynı titreşimde (${pNum}). Bu dünyadaki dışsal duruşunla ruhunun içsel tekamül amacı birbiriyle doğrudan örtüşüyor; ikilik yaşamadan tek bir ana ders üzerinden ilerliyorsun.
        </p>`
     : `<p style="text-align:center; font-size:13.5px; color:var(--parchment-dim); margin-bottom:16px;">
-        ✦ <strong>Çift Arketip Dengesi:</strong> Dış dünyada <strong>${personalityCard.name} (${pNum})</strong> maskesiyle hayatı deneyimlerken, içsel derinliğinde ve ruhunun gerçek özünde <strong>${soulCard.name} (${sNum})</strong> enerjisi seni yönetiyor.
+        ✦ <strong>Çift Arketip Dengesi:</strong> Dış dünyada <strong>${personalityCard.name} (${pNum})</strong> maskesi ve yetenekleriyle hayatı deneyimlerken, içsel derinliğinde ve ruhunun gerçek özünde <strong>${soulCard.name} (${sNum})</strong> dersi seni yönetiyor.
        </p>`;
 
   resArea.innerHTML = `
